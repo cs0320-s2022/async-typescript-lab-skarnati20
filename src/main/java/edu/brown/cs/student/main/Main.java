@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import com.google.common.collect.ImmutableMap;
@@ -14,6 +15,8 @@ import freemarker.template.Configuration;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+import org.json.JSONException;
+import org.json.JSONObject;
 import spark.*;
 import spark.template.freemarker.FreeMarkerEngine;
 
@@ -74,6 +77,7 @@ public final class Main {
         response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
       }
 
+      Spark.post("/results", new ResultsHandler());
       return "OK";
     });
 
@@ -111,12 +115,26 @@ public final class Main {
       // and rising
       // for generating matches
 
+      try {
+        JSONObject r = new JSONObject(req.body());
+        String sun = r.getString("sun");
+        String moon = r.getString("moon");
+        String rising = r.getString("rising");
+        List<String> matches = MatchMaker.makeMatches(sun, moon, rising);
+        ImmutableMap<String, List<String>> iMap = ImmutableMap.of("matches", matches);
+        Gson GSON = new Gson();
+
+        return GSON.toJson(iMap);
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
+
       // TODO: use the MatchMaker.makeMatches method to get matches
 
       // TODO: create an immutable map using the matches
 
       // TODO: return a json of the suggestions (HINT: use GSON.toJson())
-      Gson GSON = new Gson();
+
       return null;
     }
   }
